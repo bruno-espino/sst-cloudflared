@@ -11,10 +11,10 @@ export default $config({
   async run() {
     const domain = "digitalmarket.dev";
 
+    // Container that gets exposed through the tunnel
     const gpt = new docker.Container("OpenWebUI", {
       name: "open-webui",
       image: "ghcr.io/open-webui/open-webui:main",
-      restart: "always",
       volumes: [
         {
           volumeName: "open-webui",
@@ -33,6 +33,7 @@ export default $config({
           ip: "host-gateway",
         },
       ],
+      restart: "unless-stopped",
     });
 
     const tunnel = new cloudflare.Tunnel("Tunnel", {
@@ -52,7 +53,7 @@ export default $config({
         ingressRules: [
           {
             hostname: "gpt." + domain,
-            service: "http://192.168.68.55:3000",
+            service: "http://localhost:3000",
           },
           {
             service: "http_status:404"
@@ -84,6 +85,8 @@ export default $config({
         "--token",
         tunnel.tunnelToken,
       ],
+      restart: "unless-stopped",
+      networkMode: "host"
     });
   },
 });
